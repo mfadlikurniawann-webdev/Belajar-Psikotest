@@ -1,0 +1,24 @@
+# deps
+node_modules/
+.pnpm-store/
+
+# env
+.env
+.env*.local
+!.env.example
+
+# build
+.next/
+out/
+dist/
+*.tsbuildinfo
+next-env.d.ts
+
+# turbo / vercel
+.turbo/
+.vercel/
+
+# misc
+.DS_Store
+*.log
+coverage/

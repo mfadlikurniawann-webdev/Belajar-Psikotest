@@ -1,0 +1,43 @@
+import { compare } from "../builders";
+import type { CognitiveTest } from "../types";
+
+export const ketelitian: CognitiveTest = {
+  slug: "ketelitian",
+  kind: "cognitive",
+  order: 5,
+  title: "Tes Ketelitian",
+  description: "Mengukur kecermatan dan kecepatan membandingkan data dalam waktu terbatas.",
+  durationMinutes: 4,
+  instructions: [
+    "Bandingkan dua data di setiap soal, lalu tentukan apakah keduanya SAMA PERSIS atau BERBEDA.",
+    "Perhatikan huruf, angka, tanda baca, dan spasi. Satu karakter berbeda berarti 'Berbeda'.",
+    "Waktu sangat terbatas. Kerjakan secepat dan seteliti mungkin.",
+  ],
+  questions: [
+    compare("t01", "8392017", "8392017"),
+    compare("t02", "KLMNOPQ", "KLMNPOQ"),
+    compare("t03", "Jl. Merdeka No. 45", "Jl. Merdeka No. 54"),
+    compare("t04", "PT Sinar Jaya Abadi", "PT Sinar Jaya Abadi"),
+    compare("t05", "0812-3456-7890", "0812-3465-7890"),
+    compare("t06", "XJ-2049-QR", "XJ-2049-QR"),
+    compare("t07", "Rp1.250.750", "Rp1.250.750"),
+    compare("t08", "Surabaya 60234", "Surabaya 60243"),
+    compare("t09", "a7f3k9m2", "a7f3k9m2"),
+    compare("t10", "Bambang Susilo", "Bambang Susilo"),
+    compare("t11", "INV/2026/XI/0087", "INV/2026/IX/0087"),
+    compare("t12", "4.567.890,12", "4.567.890,21"),
+    compare("t13", "mfh-ghk-tlp", "mfh-ghk-tlp"),
+    compare("t14", "Kecamatan Cibeunying", "Kecamatan Cibeunying"),
+    compare("t15", "3.14159265", "3.14159625"),
+    compare("t16", "QWERTYUIOP", "QWERTYUOIP"),
+    compare("t17", "Jakarta, 17-08-1945", "Jakarta, 17-08-1945"),
+    compare("t18", "B 1234 KZT", "B 1234 KTZ"),
+    compare("t19", "NIP 198705122010011003", "NIP 198705122010011003"),
+    compare("t20", "Pramudya Wardhana", "Pramudya Wardana"),
+    compare("t21", "ZXC-908-VBN", "ZXC-908-VBN"),
+    compare("t22", "Lt. 12 Ruang 1203", "Lt. 12 Ruang 1203"),
+    compare("t23", "77-AB-91-CD", "77-AB-19-CD"),
+    compare("t24", "Sumber Rejeki Makmur", "Sumber Rezeki Makmur"),
+    compare("t25", "0,0045", "0,0045"),
+  ],
+};

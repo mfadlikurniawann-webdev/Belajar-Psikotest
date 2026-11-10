@@ -1,0 +1,28 @@
+{
+  "name": "belajar-psikotest",
+  "private": true,
+  "packageManager": "pnpm@10.34.9",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "start": "pnpm --filter @psikotest/web start",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "db:generate": "pnpm --filter @psikotest/db db:generate",
+    "db:migrate": "pnpm --filter @psikotest/db db:migrate",
+    "db:push": "pnpm --filter @psikotest/db db:push",
+    "db:studio": "pnpm --filter @psikotest/db db:studio",
+    "db:seed": "pnpm --filter @psikotest/db db:seed"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.6.6",
+    "turbo": "^2.11.10",
+    "typescript": "~5.9.3"
+  }
+}

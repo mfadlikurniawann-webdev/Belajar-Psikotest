@@ -1,0 +1,162 @@
+import { choice } from "../builders";
+import type { CognitiveTest } from "../types";
+
+const SINONIM = "Sinonim";
+const ANTONIM = "Antonim";
+const ANALOGI = "Analogi";
+
+export const verbal: CognitiveTest = {
+  slug: "verbal",
+  kind: "cognitive",
+  order: 3,
+  title: "Tes Kemampuan Verbal",
+  description: "Mengukur penguasaan kosakata dan kemampuan memahami hubungan antarkata.",
+  durationMinutes: 12,
+  instructions: [
+    "Sinonim: pilih kata yang artinya paling sama dengan kata yang dicetak kapital.",
+    "Antonim: pilih kata yang artinya paling berlawanan dengan kata yang dicetak kapital.",
+    "Analogi: pilih kata yang melengkapi hubungan agar sepadan dengan pasangan pertama.",
+  ],
+  questions: [
+    choice({
+      id: "v01",
+      section: SINONIM,
+      prompt: "CERMAT = …",
+      correct: "teliti",
+      distractors: ["cepat", "cerdas", "ceroboh"],
+    }),
+    choice({
+      id: "v02",
+      section: SINONIM,
+      prompt: "KENDALA = …",
+      correct: "hambatan",
+      distractors: ["kendaraan", "tujuan", "kesempatan"],
+    }),
+    choice({
+      id: "v03",
+      section: SINONIM,
+      prompt: "AMBIGU = …",
+      correct: "bermakna ganda",
+      distractors: ["jelas", "ambisius", "tegas"],
+    }),
+    choice({
+      id: "v04",
+      section: SINONIM,
+      prompt: "NIRLABA = …",
+      correct: "tidak mencari keuntungan",
+      distractors: ["tanpa modal", "merugi", "tanpa batas"],
+    }),
+    choice({
+      id: "v05",
+      section: SINONIM,
+      prompt: "KONKRET = …",
+      correct: "nyata",
+      distractors: ["semu", "kokoh", "abstrak"],
+    }),
+    choice({
+      id: "v06",
+      section: SINONIM,
+      prompt: "INSOMNIA = …",
+      correct: "sulit tidur",
+      distractors: ["mudah lupa", "kurang darah", "sakit kepala"],
+    }),
+    choice({
+      id: "v07",
+      section: SINONIM,
+      prompt: "EVALUASI = …",
+      correct: "penilaian",
+      distractors: ["perbaikan", "pengembangan", "perencanaan"],
+    }),
+    choice({
+      id: "v08",
+      section: ANTONIM,
+      prompt: "OPTIMIS >< …",
+      correct: "pesimis",
+      distractors: ["egois", "apatis", "realistis"],
+    }),
+    choice({
+      id: "v09",
+      section: ANTONIM,
+      prompt: "SEMENTARA >< …",
+      correct: "permanen",
+      distractors: ["sesaat", "singkat", "berkala"],
+    }),
+    choice({
+      id: "v10",
+      section: ANTONIM,
+      prompt: "ABSTRAK >< …",
+      correct: "konkret",
+      distractors: ["rumit", "samar", "umum"],
+    }),
+    choice({
+      id: "v11",
+      section: ANTONIM,
+      prompt: "EKSPOR >< …",
+      correct: "impor",
+      distractors: ["produksi", "distribusi", "konsumsi"],
+    }),
+    choice({
+      id: "v12",
+      section: ANTONIM,
+      prompt: "HEMAT >< …",
+      correct: "boros",
+      distractors: ["kikir", "irit", "cermat"],
+    }),
+    choice({
+      id: "v13",
+      section: ANTONIM,
+      prompt: "MAYORITAS >< …",
+      correct: "minoritas",
+      distractors: ["otoritas", "prioritas", "kualitas"],
+    }),
+    choice({
+      id: "v14",
+      section: ANTONIM,
+      prompt: "STATIS >< …",
+      correct: "dinamis",
+      distractors: ["diam", "stabil", "tetap"],
+    }),
+    choice({
+      id: "v15",
+      section: ANALOGI,
+      prompt: "DOKTER : RUMAH SAKIT = GURU : …",
+      correct: "sekolah",
+      distractors: ["murid", "buku", "pelajaran"],
+    }),
+    choice({
+      id: "v16",
+      section: ANALOGI,
+      prompt: "PANAS : API = DINGIN : …",
+      correct: "es",
+      distractors: ["air", "uap", "asap"],
+    }),
+    choice({
+      id: "v17",
+      section: ANALOGI,
+      prompt: "KAKI : SEPATU = TANGAN : …",
+      correct: "sarung tangan",
+      distractors: ["jari", "cincin", "gelang"],
+    }),
+    choice({
+      id: "v18",
+      section: ANALOGI,
+      prompt: "PENA : MENULIS = PISAU : …",
+      correct: "memotong",
+      distractors: ["dapur", "tajam", "besi"],
+    }),
+    choice({
+      id: "v19",
+      section: ANALOGI,
+      prompt: "AIR : HAUS = MAKANAN : …",
+      correct: "lapar",
+      distractors: ["kenyang", "nasi", "minum"],
+    }),
+    choice({
+      id: "v20",
+      section: ANALOGI,
+      prompt: "BUKU : PERPUSTAKAAN = LUKISAN : …",
+      correct: "galeri",
+      distractors: ["pelukis", "kanvas", "kuas"],
+    }),
+  ],
+};

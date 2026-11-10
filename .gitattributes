@@ -1,0 +1,5 @@
+# Paksa line ending LF di semua OS (Biome & CI memakai LF)
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ico binary

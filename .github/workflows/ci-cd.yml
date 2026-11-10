@@ -1,0 +1,228 @@
+# CI/CD Belajar Psikotest
+# - Pull request : lint, typecheck, test, build, uji migrasi DB -> deploy Preview ke Vercel (+ komentar URL di PR)
+# - Push ke main : semua cek di atas -> migrasi DB production -> deploy Production ke Vercel
+#
+# Secrets yang dibutuhkan (Settings > Secrets and variables > Actions):
+#   VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID   -> deploy Vercel
+#   DATABASE_URL (+ opsional DIRECT_DATABASE_URL)     -> migrasi DB production
+#   PREVIEW_DATABASE_URL (opsional)                   -> migrasi DB preview / Neon branch
+name: CI/CD
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  TURBO_TELEMETRY_DISABLED: 1
+  NEXT_TELEMETRY_DISABLED: 1
+
+jobs:
+  ci:
+    name: CI
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: psikotest
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/psikotest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Cache Turborepo & Next.js
+        uses: actions/cache@v6
+        with:
+          path: |
+            .turbo
+            apps/web/.next/cache
+          key: ${{ runner.os }}-build-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ hashFiles('pnpm-lock.yaml') }}-
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Lint & format (Biome)
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+      - name: Pastikan file migrasi sinkron dengan schema
+        run: |
+          pnpm db:generate
+          if [ -n "$(git status --porcelain packages/db/drizzle)" ]; then
+            echo "::error::Schema DB berubah tanpa file migrasi. Jalankan 'pnpm db:generate' lalu commit hasilnya."
+            git status --porcelain packages/db/drizzle
+            exit 1
+          fi
+
+      - name: Uji migrasi & seed di Postgres
+        env:
+          SUPERADMIN_EMAIL: ci@example.com
+          SUPERADMIN_PASSWORD: ci-password-123
+        run: |
+          pnpm db:migrate
+          pnpm db:seed
+
+  # Deploy dilewati (bukan gagal) selama secrets Vercel/DB belum diisi.
+  deploy-config:
+    name: Cek konfigurasi deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      preview: ${{ steps.check.outputs.preview }}
+      production: ${{ steps.check.outputs.production }}
+    steps:
+      - id: check
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          vercel=false
+          if [ -n "$VERCEL_TOKEN" ] && [ -n "$VERCEL_ORG_ID" ] && [ -n "$VERCEL_PROJECT_ID" ]; then vercel=true; fi
+          production=false
+          if [ "$vercel" = true ] && [ -n "$DATABASE_URL" ]; then production=true; fi
+          echo "preview=$vercel" >> "$GITHUB_OUTPUT"
+          echo "production=$production" >> "$GITHUB_OUTPUT"
+          if [ "$production" != true ]; then
+            echo "::notice::Deploy dilewati: isi secrets VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID dan DATABASE_URL (lihat README)."
+          fi
+
+  deploy-preview:
+    name: Deploy Preview
+    needs: [ci, deploy-config]
+    # PR dari fork tidak punya akses secrets, jadi dilewati.
+    if: >-
+      needs.deploy-config.outputs.preview == 'true' &&
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+    environment:
+      name: preview
+      url: ${{ steps.deploy.outputs.url }}
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      PREVIEW_DATABASE_URL: ${{ secrets.PREVIEW_DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: npm install --global vercel@latest
+
+      - name: Migrasi DB preview
+        if: env.PREVIEW_DATABASE_URL != ''
+        run: pnpm db:migrate
+        env:
+          DATABASE_URL: ${{ secrets.PREVIEW_DATABASE_URL }}
+
+      - name: Ambil konfigurasi Vercel (preview)
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy
+        id: deploy
+        run: |
+          url=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "### 🔍 Preview: $url" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Komentari PR dengan URL preview
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} --edit-last --create-if-none \
+            --body "🔍 Preview siap: ${{ steps.deploy.outputs.url }} (commit ${{ github.event.pull_request.head.sha }})"
+
+  deploy-production:
+    name: Deploy Production
+    needs: [ci, deploy-config]
+    if: >-
+      needs.deploy-config.outputs.production == 'true' &&
+      github.ref == 'refs/heads/main' &&
+      github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.url }}
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: npm install --global vercel@latest
+
+      # Migrasi dijalankan SEBELUM deploy. Tulis migrasi yang backward-compatible
+      # (tambah kolom/tabel dulu, hapus belakangan) supaya versi lama tetap jalan selama rollout.
+      - name: Migrasi DB production
+        run: pnpm db:migrate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_DATABASE_URL: ${{ secrets.DIRECT_DATABASE_URL }}
+
+      - name: Ambil konfigurasi Vercel (production)
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy
+        id: deploy
+        run: |
+          url=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "### 🚀 Production: $url" >> "$GITHUB_STEP_SUMMARY"

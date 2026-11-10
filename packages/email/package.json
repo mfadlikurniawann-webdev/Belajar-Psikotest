@@ -1,0 +1,23 @@
+{
+  "name": "@psikotest/email",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "resend": "^6.37.0"
+  },
+  "devDependencies": {
+    "@psikotest/tsconfig": "workspace:*",
+    "@types/node": "^24.0.0",
+    "typescript": "~5.9.3",
+    "vitest": "^5.1.0"
+  }
+}
