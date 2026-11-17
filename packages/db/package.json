@@ -24,7 +24,7 @@
   },
   "devDependencies": {
     "@psikotest/tsconfig": "workspace:*",
-    "@types/node": "^24.0.0",
+    "@types/node": "^26.6.6",
     "drizzle-kit": "^0.31.11",
     "tsx": "^4.23.15",
     "typescript": "~5.9.3"
